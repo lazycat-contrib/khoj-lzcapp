@@ -1,0 +1,50 @@
+version: 1
+project:
+  root: .
+  build_config: lzc-build.yml
+  package_file: package.yml
+  output: dist/application.lpk
+  target_arch: amd64
+update:
+  strategy: publish
+  allow_downgrade: false
+  version_source:
+    type: image
+    image: khoj
+build:
+  toolchains: []
+  run_buildscript: false
+images:
+  # 1.31.0 起镜像仅发 arm64，1.30.10 为最后含 amd64 的版本，锁死 tag_regex
+  - id: khoj
+    target: service
+    service: khoj
+    source: ghcr.io/khoj-ai/khoj
+    channel: stable
+    sort: semver
+    tag_regex: ^1[.]30[.]10$
+    delivery:
+      mode: mirror
+      require_digest_match: true
+  - id: pgvector
+    target: service
+    service: database
+    source: pgvector/pgvector
+    channel: custom
+    sort: semver
+    tag_regex: ^0[.][0-9]+[.][0-9]+-pg16$
+    version_regex: ^(?P<version>0[.][0-9]+[.][0-9]+)-pg16$
+    version_template: "{version}"
+    delivery:
+      mode: mirror
+      require_digest_match: true
+release:
+  use_github_release_notes: true
+  store_changelog_format: plain
+stores:
+  official:
+    enabled: false
+  private:
+    enabled: false
+    name: khoj
+    skip_if_version_exists: true

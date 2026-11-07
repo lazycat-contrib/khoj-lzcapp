@@ -1,0 +1,18 @@
+package: community.lazycat.app.khoj
+name: Khoj
+version: 1.30.10
+description: "AI second brain: chat with your notes and documents, search across your knowledge base."
+min_os_version: "1.5.0"
+homepage: https://khoj.dev
+author: Khoj
+license: AGPL-3.0
+permissions:
+  required:
+    - net.internet
+locales:
+  zh:
+    name: Khoj
+    description: "AI 第二大脑：与你的笔记和文档对话，跨知识库智能检索。"
+  en:
+    name: Khoj
+    description: "AI second brain: chat with your notes and documents, search across your knowledge base."

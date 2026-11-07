@@ -1,0 +1,67 @@
+application:
+  subdomain: khoj
+  multi_instance: false
+  # 不加 public_path：普通用户自助注册依赖邮件投递（无 SMTP 走不通），这里保持
+  # 平台入口鉴权兜底；管理员由部署参数注入随机口令，经 /server/admin 登录。
+  upstreams:
+    - location: /package-licenses/
+      backend: file:///lzcapp/pkg/content/licenses/
+    - location: /
+      backend: http://khoj:42110/
+services:
+  khoj:
+    # upstream: ghcr.io/khoj-ai/khoj:1.30.10
+    image: ghcr.1ms.run/khoj-ai/khoj:1.30.10
+    # 原生 ENTRYPOINT 为 exec 形式 python3（不能覆盖 command，isso 判例）：
+    # entrypoint 包装等待数据库后 exec 原生入口；不带 --anonymous-mode，
+    # 由应用自身登录页鉴权。
+    entrypoint: ["/bin/sh", "-c", "until timeout 2 sh -c 'exec 3<>/dev/tcp/database/5432' 2>/dev/null; do echo waiting for database; sleep 3; done; exec python3 src/khoj/main.py --host=0.0.0.0 --port=42110 --non-interactive"]
+    environment:
+      - TZ=Asia/Shanghai
+      - POSTGRES_DB=khoj
+      - POSTGRES_USER=khoj
+      - POSTGRES_PASSWORD={{PASSWORD_khoj_db_pw}}
+      - POSTGRES_HOST=database
+      - POSTGRES_PORT=5432
+      - KHOJ_DJANGO_SECRET_KEY={{ printf "%x" (stable_secret "khoj_django") }}
+      - KHOJ_ADMIN_EMAIL={{ .U.admin_email }}
+      - KHOJ_ADMIN_PASSWORD={{PASSWORD_khoj_pw}}
+      - KHOJ_DOMAIN={{ .S.AppDomain }}
+      - KHOJ_DEBUG=False
+      - KHOJ_TELEMETRY_DISABLE=True
+    binds:
+      - /lzcapp/var/config:/root/.khoj
+      - /lzcapp/var/models:/root/.cache
+    depends_on:
+      - database
+  database:
+    # upstream: pgvector/pgvector:0.8.7-pg16
+    image: docker.1ms.run/pgvector/pgvector:0.8.7-pg16
+    environment:
+      - TZ=Asia/Shanghai
+      - POSTGRES_DB=khoj
+      - POSTGRES_USER=khoj
+      - POSTGRES_PASSWORD={{PASSWORD_khoj_db_pw}}
+    binds:
+      - /lzcapp/var/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U khoj || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+usage: |
+  Khoj 是一个开源 AI 第二大脑，可与你的笔记和文档对话，支持自然语言
+  检索知识库、自定义智能体等能力。
+
+  使用方法：
+  1. 首次启动会自动完成数据库迁移并创建管理员账号（约需 1-3 分钟，期间页面可能暂时无法访问，请耐心等待）。
+  2. 管理员使用部署参数中的邮箱与随机密码，在登录页登录（管理后台位于 /server/admin），登录后请立即修改密码。
+  3. 笔记与模型缓存存放在 /lzcapp/var/config 与 /lzcapp/var/models。
+
+  说明：
+  - 本包未做实机验证，功能以官方文档为准：https://docs.khoj.dev/
+  - 应用自带账号体系，普通用户自助注册依赖邮件投递，本包未配置 SMTP，
+    故保持平台入口鉴权（未使用 public_path），请经懒猫入口访问。
+  - 联网搜索（SearxNG）与代码执行（terrarium）辅助服务未随包提供，相关功能不可用。
+  - PostgreSQL（pgvector）实例仅限应用内部网络访问，未开放对外端口。

@@ -1,0 +1,43 @@
+params:
+  - id: khoj_pw
+    type: secret
+    name: "管理员密码"
+    description: "Khoj 管理员账号的登录密码（已预置随机值，部署后请尽快修改）"
+    default_value: "069ba1a074334f7ec07badfd"
+    optional: false
+
+  - id: khoj_db_pw
+    type: secret
+    name: "数据库密码"
+    description: "PostgreSQL 数据库 khoj 用户的密码（已预置随机值）"
+    default_value: "5bd9115a0981aca4c88a5953"
+    optional: false
+
+  - id: admin_email
+    type: string
+    name: "管理员邮箱"
+    description: "Khoj 管理员账号的邮箱地址"
+    default_value: "admin@example.com"
+    optional: false
+
+locales:
+  zh:
+    khoj_pw:
+      name: "管理员密码"
+      description: "Khoj 管理员账号的登录密码（已预置随机值，部署后请尽快修改）"
+    khoj_db_pw:
+      name: "数据库密码"
+      description: "PostgreSQL 数据库 khoj 用户的密码（已预置随机值）"
+    admin_email:
+      name: "管理员邮箱"
+      description: "Khoj 管理员账号的邮箱地址"
+  en:
+    khoj_pw:
+      name: "Admin password"
+      description: "Login password for the Khoj admin account (pre-filled with a random value, change it after first login)"
+    khoj_db_pw:
+      name: "Database password"
+      description: "Password for the PostgreSQL khoj user (pre-filled with a random value)"
+    admin_email:
+      name: "Admin email"
+      description: "Email address for the Khoj admin account"
